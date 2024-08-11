@@ -1,24 +1,63 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, LinkIcon } from "lucide-react";
-import { EmailREGEX, PasswordREGEX } from "../constants";
+import { Eye, EyeOff } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
+import { EmailREGEX } from "../constants";
+import { BeatLoader } from "react-spinners";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
-import { useNavigate } from "react-router-dom";
 
 export default function SigninPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     getValues,
+    reset,
     formState: { errors },
   } = useForm();
 
-  function onSubmit(data) {
-    console.log(data);
+  async function logInUser(data) {
+    setIsLoading(true);
+    console.log("data :>> ", data);
+    const URL =
+      import.meta.env.VITE_APP_BASE_URL +
+      import.meta.env.VITE_APP_USER_ENDPOINT +
+      "/login";
+
+    try {
+      const response = await fetch(URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      console.log("response.status :>> ", response);
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.message || "Something went wrong, please try again");
+        return;
+      } else {
+        toast.success(result.message || "User Logged in successfully");
+        navigate("/");
+        reset();
+      }
+    } catch (error) {
+      console.error("error :>> ", error);
+      toast.error("Something went wrong, please try again");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function navigateToSignUpPage() {
@@ -27,10 +66,11 @@ export default function SigninPage() {
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center gap-4 px-4 sm:px-0">
+      <Toaster position="top-left" reverseOrder={false} />
       <h2 className="text-2xl">Sign In with VIDEO APP</h2>
       <form
         className="lg:w-1/3 flex flex-col items-center gap-4"
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(logInUser)}
       >
         {/* Email */}
         <div className="self-start w-full">
@@ -63,11 +103,6 @@ export default function SigninPage() {
                 className="border-none px-0 focus:outline-none"
                 {...register("password", {
                   required: { value: true, message: "Password is required" },
-                  pattern: {
-                    value: PasswordREGEX,
-                    message:
-                      "Password must contain at least one letter, one number, and one special character.",
-                  },
                 })}
               />
               {showPassword ? (
@@ -114,7 +149,10 @@ export default function SigninPage() {
             )}
           </div>
         </div>
-        <Button name="Submit" type="submit" />
+        <Button
+          name={isLoading ? <BeatLoader color="#FFF" size={10} /> : "Submit"}
+          type="submit"
+        />
       </form>
       <h3>- Or -</h3>
       <Button name="Sign Up" onClick={navigateToSignUpPage} />

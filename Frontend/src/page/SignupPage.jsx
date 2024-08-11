@@ -27,7 +27,10 @@ export default function SignupPage() {
 
   async function createUserAccount(data) {
     setIsLoading(true);
-    const URL = import.meta.env.VITE_APP_BASE_URL + "/api/v1/users/register";
+    const URL =
+      import.meta.env.VITE_APP_BASE_URL +
+      import.meta.env.VITE_APP_USER_ENDPOINT +
+      "/register";
 
     const formData = new FormData();
     formData.append("firstName", data.name);
