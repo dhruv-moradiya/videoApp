@@ -70,37 +70,41 @@ const registerUser = async (req, res) => {
 
 // * LOGIN USER
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Please fill in all fields" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please fill in all fields" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User does not exist" });
+    }
+
+    const isMatch = await user.isPasswordMatch(password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const { accessToken, refreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id);
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json({ message: "User logged in successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    return res.status(400).json({ message: "User does not exist" });
-  }
-
-  const isMatch = await user.isPasswordMatch(password);
-
-  if (!isMatch) {
-    return res.status(400).json({ message: "Invalid credentials" });
-  }
-
-  const { accessToken, refreshToken } =
-    await generateAccessTokenAndRefreshToken(user._id);
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json({ message: "User logged in successfully" });
 };
 
 // * LOGOUT USER
