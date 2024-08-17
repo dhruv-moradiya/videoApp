@@ -41,14 +41,22 @@ export default function SigninPage() {
         }),
       });
 
-      console.log("response.status :>> ", response);
       const result = await response.json();
+      console.log("result :>> ", result);
 
       if (!response.ok) {
         toast.error(result.message || "Something went wrong, please try again");
         return;
       } else {
         toast.success(result.message || "User Logged in successfully");
+        localStorage.setItem(
+          "userAuth",
+          JSON.stringify({
+            accessToken: result.accessToken,
+            userId: result.userId,
+          })
+        );
+
         navigate("/");
         reset();
       }

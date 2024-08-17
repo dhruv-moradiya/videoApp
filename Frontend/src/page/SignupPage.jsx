@@ -174,7 +174,7 @@ export default function SignupPage() {
               {...register("avatar", {
                 required: { value: true, message: "Avatar is required" },
                 onChange: () => {
-                  setAvatarFileName(getValues("avatar")[0].name);
+                  setAvatarFileName(getValues("avatar")[0]?.name);
                 },
               })}
             />
